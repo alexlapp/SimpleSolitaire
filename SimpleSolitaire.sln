@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleSolitaire.Engine", "SimpleSolitaire.Engine\SimpleSolitaire.Engine.csproj", "{530F1042-AEF0-45D1-BE48-A14611DD4BFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleSolitaire.MonoGame", "SimpleSolitaire.MonoGame\SimpleSolitaire.MonoGame.csproj", "{97D3D564-1A00-4D43-86FB-B92EE51E7442}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{530F1042-AEF0-45D1-BE48-A14611DD4BFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{530F1042-AEF0-45D1-BE48-A14611DD4BFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{530F1042-AEF0-45D1-BE48-A14611DD4BFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{530F1042-AEF0-45D1-BE48-A14611DD4BFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97D3D564-1A00-4D43-86FB-B92EE51E7442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97D3D564-1A00-4D43-86FB-B92EE51E7442}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97D3D564-1A00-4D43-86FB-B92EE51E7442}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97D3D564-1A00-4D43-86FB-B92EE51E7442}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

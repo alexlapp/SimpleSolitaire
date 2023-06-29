@@ -1,0 +1,29 @@
+﻿namespace SimpleSolitaire.Engine.Cards;
+
+public enum Suit
+{
+    Spades,
+    Diamonds,
+    Clubs,
+    Hearts
+}
+
+public enum CardColor
+{
+    Red,
+    Black
+}
+
+public readonly struct Card
+{
+    public int Rank { get; }
+    public Suit Suit { get; }
+    
+    public CardColor CardColor => Suit == Suit.Spades || Suit == Suit.Clubs ? CardColor.Black : CardColor.Red;
+
+    public Card(int rank, Suit suit)
+    {
+        Rank = rank;
+        Suit = suit;
+    }
+}
