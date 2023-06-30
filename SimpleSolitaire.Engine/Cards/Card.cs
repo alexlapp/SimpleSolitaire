@@ -26,4 +26,46 @@ public readonly struct Card
         Rank = rank;
         Suit = suit;
     }
+
+    public override string ToString()
+    {
+        char rankChar = '_';
+        switch (Rank)
+        {
+            case 13: 
+                rankChar = 'K';
+                break;
+            case 12: 
+                rankChar = 'Q';
+                break;
+            case 11:
+                rankChar = 'J';
+                break;
+            case 1:
+                rankChar = 'A';
+                break;
+            default:
+                rankChar = Rank.ToString()[0];
+                break;
+        }
+
+        char suitChar = '_';
+        switch (Suit)
+        {
+            case Suit.Spades:
+                suitChar = 'S';
+                break;
+            case Suit.Diamonds:
+                suitChar = 'D';
+                break;
+            case Suit.Clubs:
+                suitChar = 'C';
+                break;
+            case Suit.Hearts:
+                suitChar = 'H';
+                break;
+        }
+
+        return $"{rankChar}{suitChar}";
+    }
 }
