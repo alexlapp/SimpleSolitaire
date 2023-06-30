@@ -2,6 +2,13 @@
 
 namespace SimpleSolitaire.Engine.Cards;
 
+public enum PileFlow
+{
+    Stack,
+    Downwards,
+    Rightwards,
+}
+
 public class Pile
 {
     private List<Card> _cards;
@@ -10,10 +17,20 @@ public class Pile
     private EmptyAcceptStrategy _emptyAcceptStrategy;
     private CardAvailabilityStrategy _cardAvailabilityStrategy;
 
-    public Pile(OrderingStrategy orderingStrategy, AcceptStrategy? acceptFunction = null, EmptyAcceptStrategy? emptyAcceptStrategy = null, CardAvailabilityStrategy? cardAvailabilityStrategy = null)
+    public List<Card> Cards => _cards;
+    
+    public PileFlow PileFlow { get; }
+
+    public bool CanAcceptPile(Pile incoming) =>
+        _cards.Any() ? _acceptFunction(_cards, incoming.Cards) : _emptyAcceptStrategy(incoming.Cards);
+
+    public bool IsCardAvailable(int cardIndex) => _cardAvailabilityStrategy(_cards, cardIndex);
+
+    public Pile(OrderingStrategy orderingStrategy, PileFlow pileFlow = PileFlow.Stack, AcceptStrategy? acceptFunction = null, EmptyAcceptStrategy? emptyAcceptStrategy = null, CardAvailabilityStrategy? cardAvailabilityStrategy = null)
     {
         _cards = new List<Card>();
-        
+
+        PileFlow = pileFlow;
         _orderingStrategy = orderingStrategy;
         _emptyAcceptStrategy = emptyAcceptStrategy ?? EmptyAcceptStrategies.Any;
         _acceptFunction = acceptFunction ?? ((List<Card> pileCards, List<Card> incoming) =>
