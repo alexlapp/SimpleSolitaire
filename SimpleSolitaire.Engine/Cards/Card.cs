@@ -14,7 +14,15 @@ public enum CardColor
     Black
 }
 
-public readonly struct Card
+public interface ICard
+{
+    int Rank { get; }
+    Suit Suit { get; }
+    CardColor CardColor { get; }
+    string ToString();
+}
+
+public readonly struct Card : ICard
 {
     public int Rank { get; }
     public Suit Suit { get; }

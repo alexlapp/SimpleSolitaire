@@ -9,37 +9,37 @@ public enum PileFlow
     Rightwards,
 }
 
-public class Pile
+public class Pile<TCard> where TCard : ICard
 {
-    private List<Card> _cards;
-    private OrderingStrategy _orderingStrategy;
-    private AcceptStrategy _acceptFunction;
-    private EmptyAcceptStrategy _emptyAcceptStrategy;
-    private CardAvailabilityStrategy _cardAvailabilityStrategy;
+    private List<TCard> _cards;
+    private OrderingStrategy<TCard> _orderingStrategy;
+    private AcceptStrategy<TCard> _acceptFunction;
+    private EmptyAcceptStrategy<TCard> _emptyAcceptStrategy;
+    private CardAvailabilityStrategy<TCard> _cardAvailabilityStrategy;
 
-    public List<Card> Cards => _cards;
+    public List<TCard> Cards => _cards;
     
     public PileFlow PileFlow { get; }
 
-    public bool CanAcceptPile(Pile incoming) =>
+    public bool CanAcceptPile(Pile<TCard> incoming)  =>
         _cards.Any() ? _acceptFunction(_cards, incoming.Cards) : _emptyAcceptStrategy(incoming.Cards);
 
     public bool IsCardAvailable(int cardIndex) => _cardAvailabilityStrategy(_cards, cardIndex);
 
-    public Pile(OrderingStrategy orderingStrategy, PileFlow pileFlow = PileFlow.Stack, AcceptStrategy? acceptFunction = null, EmptyAcceptStrategy? emptyAcceptStrategy = null, CardAvailabilityStrategy? cardAvailabilityStrategy = null)
+    public Pile(OrderingStrategy<TCard> orderingStrategy, PileFlow pileFlow = PileFlow.Stack, AcceptStrategy<TCard>? acceptFunction = null, EmptyAcceptStrategy<TCard>? emptyAcceptStrategy = null, CardAvailabilityStrategy<TCard>? cardAvailabilityStrategy = null)
     {
-        _cards = new List<Card>();
+        _cards = new List<TCard>();
 
         PileFlow = pileFlow;
         _orderingStrategy = orderingStrategy;
-        _emptyAcceptStrategy = emptyAcceptStrategy ?? EmptyAcceptStrategies.Any;
-        _acceptFunction = acceptFunction ?? ((List<Card> pileCards, List<Card> incoming) =>
+        _emptyAcceptStrategy = emptyAcceptStrategy ?? ((List<TCard> card) => true);
+        _acceptFunction = acceptFunction ?? ((List<TCard> pileCards, List<TCard> incoming) =>
         {
             if (!(pileCards.Any() || !incoming.Any())) return false;
 
             return _orderingStrategy(pileCards.Last(), incoming.First());
         });
-        _cardAvailabilityStrategy = cardAvailabilityStrategy ?? ((List<Card> cards, int cardIndex) =>
+        _cardAvailabilityStrategy = cardAvailabilityStrategy ?? ((List<TCard> cards, int cardIndex) =>
         {
             if (cardIndex < 0 || cardIndex >= cards.Count) return false;
             if (cardIndex == cards.Count - 1) return true;
