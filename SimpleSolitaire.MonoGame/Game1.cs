@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -10,23 +11,13 @@ using SimpleSolitaire.MonoGame.Extensions;
 namespace SimpleSolitaire.MonoGame;
 
 // TODO: Move these classes
-public class GraphicalCard : ICard
+public class GraphicalCard : Card
 {
     public Rectangle Area { get; set; }
-    public int Rank { get; }
-    public Suit Suit { get; }
-    public CardColor CardColor => Suit == Suit.Spades || Suit == Suit.Clubs ? CardColor.Black : CardColor.Red;
 
-    public GraphicalCard(int rank, Suit suit)
+    public GraphicalCard(int rank, Suit suit, Rectangle? area = null) : base(rank, suit)
     {
-        Rank = rank;
-        Suit = suit;
-        Area = Rectangle.Empty;
-    }
-
-    public GraphicalCard(int rank, Suit suit, Rectangle area) : this(rank, suit)
-    {
-        Area = area;
+        Area = area ?? new Rectangle(0, 0, 32, 48);
     }
 }
 
@@ -40,37 +31,66 @@ public class GraphicalPile : Pile<GraphicalCard>
         set => _area = value;
     }
 
-    public void AddCard(GraphicalCard card)
+    private Point GetCardPosition(int cardIndex)
     {
         var offset = Point.Zero;
         switch (PileFlow)
         {
-            case (PileFlow.Downwards): 
+            case (PileFlow.Downwards):
                 offset = new Point(0, 13);
                 break;
             
-            case (PileFlow.Rightwards): 
+            case (PileFlow.Rightwards):
                 offset = new Point(12, 0);
                 break;
         }
 
-        var startPosition = Area.Location;
+        return Area.Location + new Point(offset.X * cardIndex, offset.Y * cardIndex);
+    } 
 
-        card.Area = new Rectangle(startPosition + (new Point(offset.X * Cards.Count, offset.Y * Cards.Count)), card.Area.Size);
-        Cards.Add(card);
+    public override void AddCard(GraphicalCard card)
+    {
+        var position = GetCardPosition(_cards.Count);
+        card.Area = new Rectangle(position, card.Area.Size);
+        
+        base.AddCard(card);
     }
 
-    public GraphicalPile(OrderingStrategy<GraphicalCard> orderingStrategy, PileFlow pileFlow = PileFlow.Stack,
-        AcceptStrategy<GraphicalCard>? acceptFunction = null, EmptyAcceptStrategy<GraphicalCard>? emptyAcceptStrategy = null,
-        CardAvailabilityStrategy<GraphicalCard>? cardAvailabilityStrategy = null) : base(orderingStrategy, pileFlow, acceptFunction,
-        emptyAcceptStrategy, cardAvailabilityStrategy)
+    public void UpdatePositions()
     {
+        for (var i = 0; i < _cards.Count; i++)
+        {
+            _cards[i].Area = new Rectangle(GetCardPosition(i), _cards[i].Area.Size);
+        }
     }
 
     public void SetPosition(Point position)
     {
         _area.X = position.X;
         _area.Y = position.Y;
+    }
+
+    public GraphicalPile(OrderingStrategy orderingStrategy, PileFlow pileFlow = PileFlow.Stack,
+        AcceptStrategy? acceptFunction = null, EmptyAcceptStrategy? emptyAcceptStrategy = null,
+        CardAvailabilityStrategy? cardAvailabilityStrategy = null) : base(orderingStrategy, pileFlow, acceptFunction,
+        emptyAcceptStrategy, cardAvailabilityStrategy)
+    {
+    }
+
+    public GraphicalPile(GraphicalPile other) : base(other)
+    {
+        _area = other._area;
+    }
+
+    public override GraphicalPile PileFromIndex(int index)
+    {
+        var result = new GraphicalPile(this)
+        {
+            _cards = TakeCardsFromIndex(index)
+        };
+        result._area = new Rectangle(result._cards.First().Area.Location, result.Area.Size);
+
+        return result;
     }
 }
 
@@ -106,10 +126,11 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-        Random r = new Random();
-        OrderingStrategy<GraphicalCard> anyOrder = (GraphicalCard top, GraphicalCard bottom) => true; 
+        var r = new Random();
+        OrderingStrategy anyOrder = (Card top, Card bottom) => true; 
         var testPileOne = new GraphicalPile(anyOrder, PileFlow.Downwards);
         testPileOne.Area = new Rectangle(50, 50, 32, 48);
+        
         var testPileTwo = new GraphicalPile(anyOrder, PileFlow.Rightwards);
         testPileTwo.Area = new Rectangle(100, 50, 32, 48);
         
@@ -140,6 +161,38 @@ public class Game1 : Game
 #endif
 
     private bool _leftButtonWasPressed = false;
+    private GraphicalPile? dragPile = null;
+    private GraphicalPile? dragStartPile = null;
+    private Point dragOffset = Point.Zero;
+
+    private (GraphicalPile?, int cardIndex) GetTopCardAtPoint(Point testPoint, bool includeEmptyPile = false)
+    {
+        foreach (var pile in _piles)
+        {
+            for (var i = pile.Cards.Count - 1; i >= 0; i--)
+            {
+                var gCard = pile.Cards[i];
+                if (testPoint.X >= gCard.Area.X
+                    && testPoint.X <= gCard.Area.X + gCard.Area.Width
+                    && testPoint.Y >= gCard.Area.Y
+                    && testPoint.Y <= gCard.Area.Y + gCard.Area.Height)
+                {
+                    Debug.WriteLine($"CLICK: {gCard.ToString()}");
+                    return (pile, i);
+                }
+            }
+            if (includeEmptyPile 
+                && testPoint.X >= pile.Area.X
+                && testPoint.X <= pile.Area.X + pile.Area.Width
+                && testPoint.Y >= pile.Area.Y
+                && testPoint.Y <= pile.Area.Y + pile.Area.Height)
+            {
+                return (pile, -1);
+            }
+        }
+
+        return (null, -1);
+    }
 
     protected override void Update(GameTime gameTime)
     {
@@ -158,16 +211,45 @@ public class Game1 : Game
 
         // TODO: Add your update logic here
         var leftButtonPressed = Mouse.GetState().LeftButton == ButtonState.Pressed;
+        var mousePos = (Mouse.GetState().Position.ToVector2() / 2).ToPoint();
+
+        GraphicalPile? clickedPile = null;
+        int cardIndex = -1;
 
         if (leftButtonPressed && !_leftButtonWasPressed)
         {
-            var mousePos = Mouse.GetState().Position;
-            foreach (var pile in _piles)
-            {
-                // TODO: Clicky logic here
-            }
+            (clickedPile, cardIndex) = GetTopCardAtPoint(mousePos);
         }
 
+        if (clickedPile != null && dragPile == null)
+        {
+            dragStartPile = clickedPile;
+            dragPile = clickedPile.PileFromIndex(cardIndex);
+            dragOffset = mousePos - dragPile.Area.Location;
+        }
+
+        if (dragPile != null)
+        {
+            dragPile.Area = new Rectangle(mousePos - dragOffset, dragPile.Area.Size);
+            dragPile.UpdatePositions();
+        }
+
+        if (_leftButtonWasPressed && !leftButtonPressed && dragPile != null && dragStartPile != null)
+        {
+            var (dropPile, _) = GetTopCardAtPoint(mousePos, includeEmptyPile: true);
+
+            var targetPile = dropPile ?? dragStartPile;
+            
+            foreach (var card in dragPile.Cards)
+            {
+                targetPile.AddCard(card);
+            }
+
+            dragPile = null;
+            dragStartPile = null;
+            dragOffset = Point.Zero;
+        }
+        
         _leftButtonWasPressed = leftButtonPressed;
         base.Update(gameTime);
 
@@ -187,6 +269,9 @@ public class Game1 : Game
         {
             DrawPile(_spriteBatch, pile);
         }
+        
+        if (dragPile != null)
+            DrawPile(_spriteBatch, dragPile);
 
         _spriteBatch.End();
 
@@ -195,6 +280,7 @@ public class Game1 : Game
 
     private void DrawPile(SpriteBatch spriteBatch, GraphicalPile gPile)
     {
+        DrawGraphicalCard(spriteBatch, new GraphicalCard(16, Suit.Spades, gPile.Area));
         foreach (var card in gPile.Cards)
         {
             DrawGraphicalCard(spriteBatch, card);

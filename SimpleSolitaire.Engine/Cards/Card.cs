@@ -14,15 +14,7 @@ public enum CardColor
     Black
 }
 
-public interface ICard
-{
-    int Rank { get; }
-    Suit Suit { get; }
-    CardColor CardColor { get; }
-    string ToString();
-}
-
-public readonly struct Card : ICard
+public class Card
 {
     public int Rank { get; }
     public Suit Suit { get; }
@@ -51,6 +43,9 @@ public readonly struct Card : ICard
                 break;
             case 1:
                 rankChar = 'A';
+                break;
+            case 10:
+                rankChar = 'T';
                 break;
             default:
                 rankChar = Rank.ToString()[0];
