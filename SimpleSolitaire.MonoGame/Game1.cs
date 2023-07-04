@@ -145,7 +145,7 @@ public class Game1 : Game
             dragOffset = mousePos - dragPile.Area.Location;
         }
 
-        dragPile.SetPosition(mousePos - dragOffset);
+        dragPile?.SetPosition(mousePos - dragOffset);
 
         if (_leftButtonWasPressed && !leftButtonPressed && dragPile != null && dragStartPile != null)
         {
@@ -180,42 +180,14 @@ public class Game1 : Game
 
         foreach (var pile in _piles)
         {
-            DrawPile(_spriteBatch, pile);
+            _spriteBatch.DrawPile(_cardSpritesheet, pile);
         }
         
         if (dragPile != null)
-            DrawPile(_spriteBatch, dragPile);
+            _spriteBatch.DrawPile(_cardSpritesheet, dragPile);
 
         _spriteBatch.End();
 
         base.Draw(gameTime);
-    }
-
-    private void DrawPile(SpriteBatch spriteBatch, GraphicalPile gPile)
-    {
-        DrawGraphicalCard(spriteBatch, new GraphicalCard(16, Suit.Spades, gPile.Area));
-        foreach (var card in gPile.Cards)
-        {
-            DrawGraphicalCard(spriteBatch, card);
-        }
-    }
-
-    private void DrawGraphicalCard(SpriteBatch spriteBatch, GraphicalCard gCard)
-    {
-        var sourceRectangle = new Rectangle(0, 0, 32, 48);
-        sourceRectangle.Y = (gCard.Rank - 1) * 48;
-        switch (gCard.Suit)
-        {  
-            case (Suit.Spades): sourceRectangle.X = 0;
-                break;
-            case (Suit.Diamonds): sourceRectangle.X = 32 * 1;
-                break;
-            case (Suit.Clubs): sourceRectangle.X = 32 * 2;
-                break;
-            case (Suit.Hearts): sourceRectangle.X = 32 * 3;
-                break;
-        }
-        
-        spriteBatch.Draw(_cardSpritesheet, gCard.Area.Location.ToVector2(), sourceRectangle, Color.White, 0.0f, Vector2.Zero, 1.0f, SpriteEffects.None, 0.0f);
     }
 }
