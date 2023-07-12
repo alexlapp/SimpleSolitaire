@@ -98,7 +98,7 @@ public class Game1 : Game
                     return (pile, i);
                 }
             }
-            if (includeEmptyPile 
+            if (includeEmptyPile
                 && testPoint.X >= pile.Area.X
                 && testPoint.X <= pile.Area.X + pile.Area.Width
                 && testPoint.Y >= pile.Area.Y
@@ -109,6 +109,31 @@ public class Game1 : Game
         }
 
         return (null, -1);
+    }
+
+    private GraphicalPile? GetPileAtPoint(Point testPoint)
+    {
+        foreach (var pile in _piles)
+        {
+            var upperLeft = pile.Area.Location;
+            var lowerRight = pile.Area.Location + pile.Area.Size;
+            
+            if (pile.Cards.Any())
+            {
+                var lastCard = pile.Cards.Last();
+                lowerRight = lastCard.Area.Location + lastCard.Area.Size;
+            }
+
+            if (testPoint.X >= upperLeft.X
+                && testPoint.X <= lowerRight.X
+                && testPoint.Y >= upperLeft.Y
+                && testPoint.Y <= lowerRight.Y)
+            {
+                return pile;
+            }
+        }
+
+        return null;
     }
 
     protected override void Update(GameTime gameTime)
@@ -149,9 +174,7 @@ public class Game1 : Game
 
         if (_leftButtonWasPressed && !leftButtonPressed && dragPile != null && dragStartPile != null)
         {
-            var (dropPile, _) = GetTopCardAtPoint(mousePos, includeEmptyPile: true);
-
-            var targetPile = dropPile ?? dragStartPile;
+            var targetPile = GetPileAtPoint(mousePos) ?? dragStartPile;
             
             foreach (var card in dragPile.Cards)
             {
